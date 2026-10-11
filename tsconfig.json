@@ -12,5 +12,12 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["app/**/*", "src/**/*", "poc/**/*", "tests/**/*"]
+  "include": [
+    "app/**/*",
+    "src/**/*",
+    "poc/**/*",
+    "tests/**/*",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
 }
