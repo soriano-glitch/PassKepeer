@@ -1,7 +1,8 @@
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAppTheme } from '../../src/components/theme';
+import { useConfirm } from '../../src/components/confirm';
 import { Avatar, PrototypeBanner } from '../../src/components/ui';
 import { getPrototypeSettingsStore } from '../../src/features/settings/store';
 import { getPrototypeStore, type PrototypeEntry } from '../../src/features/vault/memory-store';
@@ -20,6 +21,7 @@ export default function EntryDetail() {
   const [, setVersion] = useState(0);
 
   const entry = id === undefined ? null : getPrototypeStore().get(id);
+  const { confirm } = useConfirm();
 
   if (entry === null) {
     return (
@@ -43,18 +45,16 @@ export default function EntryDetail() {
     }
   }
 
-  function confirmDelete(target: PrototypeEntry) {
-    Alert.alert('Delete entry?', `"${target.title}" will be removed from the prototype store.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          getPrototypeStore().remove(target.id);
-          router.back();
-        },
-      },
-    ]);
+  async function confirmDelete(target: PrototypeEntry) {
+    const ok = await confirm({
+      title: 'Delete entry?',
+      message: `"${target.title}" will be removed from the prototype store.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
+    getPrototypeStore().remove(target.id);
+    router.back();
   }
 
   return (

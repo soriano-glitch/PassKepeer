@@ -2,6 +2,7 @@ import { Stack, router, usePathname } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { AutoLocker } from '../src/services/auto-lock';
+import { ConfirmProvider } from '../src/components/confirm';
 import { getPrototypeSettingsStore } from '../src/features/settings/store';
 import { expoClipboard } from '../src/services/expo-clipboard';
 import { log } from '../src/services/logger';
@@ -34,5 +35,9 @@ export default function RootLayout() {
     };
   }, [pathname]);
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <ConfirmProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </ConfirmProvider>
+  );
 }

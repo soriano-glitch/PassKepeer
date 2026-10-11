@@ -1,7 +1,8 @@
 import { useFocusEffect, router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAppTheme } from '../../src/components/theme';
+import { useConfirm } from '../../src/components/confirm';
 import { PrototypeBanner, SectionLabel } from '../../src/components/ui';
 import { serializeTransfer } from '../../src/features/backup/transfer';
 import { getPrototypeSettingsStore } from '../../src/features/settings/store';
@@ -41,6 +42,7 @@ export default function SettingsTab() {
   const [lockMs, setLockMs] = useState(() => getPrototypeSettingsStore().get().autoLockMs);
   const [notice, setNotice] = useState<string | null>(null);
   const [, setVersion] = useState(0);
+  const { confirm, notify } = useConfirm();
 
   useFocusEffect(
     useCallback(() => {
@@ -51,48 +53,39 @@ export default function SettingsTab() {
   );
 
   function explainMasterPassword() {
-    Alert.alert(
-      'Master password — not yet',
-      'Real master-password setup needs Argon2id key derivation running on a device (Phase 2 proof of concept). Anything built before that would be fake security, so this row stays honest until the crypto lands.',
-    );
+    void notify({
+      title: 'Master password — not yet',
+      message:
+        'Real master-password setup needs Argon2id key derivation running on a device (Phase 2 proof of concept). Anything built before that would be fake security, so this row stays honest until the crypto lands.',
+    });
   }
 
-  function handleCopyTransfer() {
+  async function handleCopyTransfer() {
     const count = getPrototypeStore().list().length;
-    Alert.alert(
-      'Copy unencrypted transfer?',
-      `This copies ${count} entr${count === 1 ? 'y' : 'ies'} as plaintext JSON to the clipboard. Demo data only — never real passwords.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Copy',
-          onPress: () => {
-            expoClipboard
-              .copyAndScheduleClear(serializeTransfer(getPrototypeStore().list()), clearMs)
-              .then(() => setNotice('Transfer JSON copied — paste it into Import.'))
-              .catch(() => setNotice('Copy failed.'));
-          },
-        },
-      ],
-    );
+    const ok = await confirm({
+      title: 'Copy unencrypted transfer?',
+      message: `This copies ${count} entr${count === 1 ? 'y' : 'ies'} as plaintext JSON to the clipboard. Demo data only — never real passwords.`,
+      confirmLabel: 'Copy',
+    });
+    if (!ok) return;
+    try {
+      await expoClipboard.copyAndScheduleClear(serializeTransfer(getPrototypeStore().list()), clearMs);
+      setNotice('Transfer JSON copied — paste it into Import.');
+    } catch {
+      setNotice('Copy failed.');
+    }
   }
 
-  function confirmClearAll() {
-    Alert.alert(
-      'Delete all entries?',
-      'This wipes every entry in the prototype memory store. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete all',
-          style: 'destructive',
-          onPress: () => {
-            getPrototypeStore().clear();
-            setVersion((v) => v + 1);
-          },
-        },
-      ],
-    );
+  async function confirmClearAll() {
+    const ok = await confirm({
+      title: 'Delete all entries?',
+      message: 'This wipes every entry in the prototype memory store. This cannot be undone.',
+      confirmLabel: 'Delete all',
+      destructive: true,
+    });
+    if (!ok) return;
+    getPrototypeStore().clear();
+    setVersion((v) => v + 1);
   }
 
   return (

@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Button, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { useAppTheme } from '../../src/components/theme';
+import { useConfirm } from '../../src/components/confirm';
 import { PrototypeBanner } from '../../src/components/ui';
 import { parseTransfer, restoreTransfer } from '../../src/features/backup/transfer';
 import { getPrototypeStore } from '../../src/features/vault/memory-store';
@@ -11,6 +12,7 @@ export default function ImportEntries() {
   const [text, setText] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { confirm } = useConfirm();
 
   function handleValidate() {
     setError(null);
@@ -25,7 +27,7 @@ export default function ImportEntries() {
     }
   }
 
-  function handleImport() {
+  async function handleImport() {
     setError(null);
     let count = 0;
     try {
@@ -35,26 +37,20 @@ export default function ImportEntries() {
       return;
     }
     const current = getPrototypeStore().list().length;
-    Alert.alert(
-      'Replace vault?',
-      `This deletes the current ${current} entr${current === 1 ? 'y' : 'ies'} and imports ${count}. This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Import',
-          style: 'destructive',
-          onPress: () => {
-            try {
-              restoreTransfer(getPrototypeStore(), text);
-              router.back();
-            } catch (err) {
-              setPreview(null);
-              setError(err instanceof Error ? err.message : 'Import failed.');
-            }
-          },
-        },
-      ],
-    );
+    const ok = await confirm({
+      title: 'Replace vault?',
+      message: `This deletes the current ${current} entr${current === 1 ? 'y' : 'ies'} and imports ${count}. This cannot be undone.`,
+      confirmLabel: 'Import',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      restoreTransfer(getPrototypeStore(), text);
+      router.back();
+    } catch (err) {
+      setPreview(null);
+      setError(err instanceof Error ? err.message : 'Import failed.');
+    }
   }
 
   return (
