@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "PassKeeper",
+    "slug": "passkeeper",
+    "version": "0.1.0-phase1",
+    "orientation": "portrait",
+    "scheme": "passkeeper",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0D12"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.passkeeper.phase1",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "PassKeeper uses Face ID to authorize release of the device-bound key that unwraps your vault key. The master password remains required at setup and as fallback.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "app.passkeeper.phase1",
+      "allowBackup": false,
+      "permissions": ["USE_BIOMETRIC"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow PassKeeper to use Face ID to unlock your vault."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
