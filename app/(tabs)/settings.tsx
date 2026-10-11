@@ -1,4 +1,4 @@
-import { Link, useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAppTheme } from '../../src/components/theme';
@@ -159,12 +159,14 @@ export default function SettingsTab() {
         <Text style={[styles.rowLabel, { color: c.text }]}>Copy transfer JSON</Text>
         <Text style={[styles.chevron, { color: c.muted }]}>›</Text>
       </Pressable>
-      <Link href="/settings/import" asChild>
-        <Pressable style={[styles.row, { backgroundColor: c.card }]} accessibilityRole="button">
-          <Text style={[styles.rowLabel, { color: c.text }]}>Import pasted JSON</Text>
-          <Text style={[styles.chevron, { color: c.muted }]}>›</Text>
-        </Pressable>
-      </Link>
+      <Pressable
+        style={[styles.row, { backgroundColor: c.card }]}
+        onPress={() => router.push('/settings/import')}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.rowLabel, { color: c.text }]}>Import pasted JSON</Text>
+        <Text style={[styles.chevron, { color: c.muted }]}>›</Text>
+      </Pressable>
       <Pressable
         style={[styles.row, { backgroundColor: c.card }]}
         onPress={confirmClearAll}
