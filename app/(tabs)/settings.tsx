@@ -1,10 +1,12 @@
-import { useFocusEffect } from 'expo-router';
+import { Link, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAppTheme } from '../../src/components/theme';
 import { PrototypeBanner, SectionLabel } from '../../src/components/ui';
+import { serializeTransfer } from '../../src/features/backup/transfer';
 import { getPrototypeSettingsStore } from '../../src/features/settings/store';
 import { getPrototypeStore } from '../../src/features/vault/memory-store';
+import { expoClipboard } from '../../src/services/expo-clipboard';
 
 const CLIPBOARD_OPTIONS = [
   { label: '5s', ms: 5_000 },
@@ -13,29 +15,67 @@ const CLIPBOARD_OPTIONS = [
   { label: '60s', ms: 60_000 },
 ];
 
-function SoonRow({ label }: { label: string }) {
+const AUTOLOCK_OPTIONS = [
+  { label: '1m', ms: 60_000 },
+  { label: '2m', ms: 120_000 },
+  { label: '5m', ms: 300_000 },
+  { label: '15m', ms: 900_000 },
+];
+
+function SoonRow({ label, onPress }: { label: string; onPress: () => void }) {
   const c = useAppTheme();
   return (
-    <View style={[styles.row, { backgroundColor: c.card }]}>
+    <Pressable style={[styles.row, { backgroundColor: c.card }]} onPress={onPress} accessibilityRole="button">
       <Text style={[styles.rowLabel, { color: c.text }]}>{label}</Text>
       <View style={styles.rowRight}>
         <Text style={[styles.soon, { color: c.muted }]}>Soon</Text>
         <Text style={[styles.chevron, { color: c.muted }]}>›</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 export default function SettingsTab() {
   const c = useAppTheme();
   const [clearMs, setClearMs] = useState(() => getPrototypeSettingsStore().get().clipboardClearMs);
+  const [lockMs, setLockMs] = useState(() => getPrototypeSettingsStore().get().autoLockMs);
+  const [notice, setNotice] = useState<string | null>(null);
   const [, setVersion] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
-      setClearMs(getPrototypeSettingsStore().get().clipboardClearMs);
+      const s = getPrototypeSettingsStore().get();
+      setClearMs(s.clipboardClearMs);
+      setLockMs(s.autoLockMs);
     }, []),
   );
+
+  function explainMasterPassword() {
+    Alert.alert(
+      'Master password — not yet',
+      'Real master-password setup needs Argon2id key derivation running on a device (Phase 2 proof of concept). Anything built before that would be fake security, so this row stays honest until the crypto lands.',
+    );
+  }
+
+  function handleCopyTransfer() {
+    const count = getPrototypeStore().list().length;
+    Alert.alert(
+      'Copy unencrypted transfer?',
+      `This copies ${count} entr${count === 1 ? 'y' : 'ies'} as plaintext JSON to the clipboard. Demo data only — never real passwords.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Copy',
+          onPress: () => {
+            expoClipboard
+              .copyAndScheduleClear(serializeTransfer(getPrototypeStore().list()), clearMs)
+              .then(() => setNotice('Transfer JSON copied — paste it into Import.'))
+              .catch(() => setNotice('Copy failed.'));
+          },
+        },
+      ],
+    );
+  }
 
   function confirmClearAll() {
     Alert.alert(
@@ -62,8 +102,32 @@ export default function SettingsTab() {
       </Text>
       <PrototypeBanner />
       <SectionLabel text="Security" />
-      <SoonRow label="Master password" />
-      <SoonRow label="Auto-lock" />
+      <SoonRow label="Master password" onPress={explainMasterPassword} />
+      <View style={[styles.row, { backgroundColor: c.card }]}>
+        <Text style={[styles.rowLabel, { color: c.text }]}>Auto-lock after</Text>
+      </View>
+      <View style={styles.options}>
+        {AUTOLOCK_OPTIONS.map((o) => (
+          <Pressable
+            key={o.ms}
+            onPress={() => setLockMs(getPrototypeSettingsStore().setAutoLockMs(o.ms).autoLockMs)}
+            accessibilityRole="button"
+          >
+            <Text
+              style={[
+                styles.chip,
+                { backgroundColor: c.card, color: c.muted },
+                lockMs === o.ms && { backgroundColor: c.accent, color: c.accentText },
+              ]}
+            >
+              {o.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={[styles.hint, { color: c.muted }]}>
+        Prototype lock returns to the Vault and clears the clipboard. No authentication gate yet.
+      </Text>
       <View style={[styles.row, { backgroundColor: c.card }]}>
         <Text style={[styles.rowLabel, { color: c.text }]}>Clear clipboard after</Text>
       </View>
@@ -87,8 +151,20 @@ export default function SettingsTab() {
         ))}
       </View>
       <SectionLabel text="Data" />
-      <SoonRow label="Export vault" />
-      <SoonRow label="Import entries" />
+      <Pressable
+        style={[styles.row, { backgroundColor: c.card }]}
+        onPress={handleCopyTransfer}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.rowLabel, { color: c.text }]}>Copy transfer JSON</Text>
+        <Text style={[styles.chevron, { color: c.muted }]}>›</Text>
+      </Pressable>
+      <Link href="/settings/import" asChild>
+        <Pressable style={[styles.row, { backgroundColor: c.card }]} accessibilityRole="button">
+          <Text style={[styles.rowLabel, { color: c.text }]}>Import pasted JSON</Text>
+          <Text style={[styles.chevron, { color: c.muted }]}>›</Text>
+        </Pressable>
+      </Link>
       <Pressable
         style={[styles.row, { backgroundColor: c.card }]}
         onPress={confirmClearAll}
@@ -96,6 +172,7 @@ export default function SettingsTab() {
       >
         <Text style={[styles.rowLabel, { color: c.danger }]}>Delete all entries</Text>
       </Pressable>
+      {notice ? <Text style={[styles.notice, { color: c.muted }]}>{notice}</Text> : null}
       <SectionLabel text="About" />
       <View style={[styles.row, { backgroundColor: c.card }]}>
         <Text style={[styles.rowLabel, { color: c.text }]}>Version</Text>
@@ -123,4 +200,6 @@ const styles = StyleSheet.create({
   version: { fontSize: 13 },
   options: { flexDirection: 'row', gap: 8 },
   chip: { fontSize: 13, fontWeight: '600', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 14 },
+  hint: { fontSize: 12, lineHeight: 17 },
+  notice: { fontSize: 13 },
 });
