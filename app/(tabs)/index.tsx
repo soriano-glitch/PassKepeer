@@ -24,21 +24,23 @@ function EntryCard({
 }) {
   const c = useAppTheme();
   return (
-    <Pressable
-      style={[styles.card, { backgroundColor: c.card }]}
-      onPress={() => router.push({ pathname: '/entry/[id]/index', params: { id: entry.id } })}
-      accessibilityRole="button"
-    >
-      <Avatar letter={entry.title.charAt(0) || '?'} />
-      <View style={styles.cardMain}>
-        <Text style={[styles.cardTitle, { color: c.text }]}>{entry.title}</Text>
-        <Text style={[styles.cardSub, { color: c.muted }]}>{entry.username}</Text>
-        <Text style={[styles.cardTag, { color: c.accent }]}>{entry.category.toUpperCase()}</Text>
-      </View>
+    <View style={[styles.card, { backgroundColor: c.card }]}>
+      <Pressable
+        style={styles.cardMainPress}
+        onPress={() => router.push({ pathname: '/entry/detail', params: { id: entry.id } })}
+        accessibilityRole="button"
+      >
+        <Avatar letter={entry.title.charAt(0) || '?'} />
+        <View style={styles.cardMain}>
+          <Text style={[styles.cardTitle, { color: c.text }]}>{entry.title}</Text>
+          <Text style={[styles.cardSub, { color: c.muted }]}>{entry.username}</Text>
+          <Text style={[styles.cardTag, { color: c.accent }]}>{entry.category.toUpperCase()}</Text>
+        </View>
+      </Pressable>
       <Pressable onPress={onToggleFavorite} accessibilityRole="button" accessibilityLabel="Toggle favorite">
         <Text style={[styles.star, { color: c.star }]}>{entry.isFavorite ? '★' : '☆'}</Text>
       </Pressable>
-    </Pressable>
+    </View>
   );
 }
 
@@ -162,7 +164,8 @@ const styles = StyleSheet.create({
   search: { borderRadius: 12, padding: 12, fontSize: 15 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { fontSize: 13, fontWeight: '600', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 14 },
-  card: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 14, marginBottom: 10, gap: 12 },
+  card: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 14, marginBottom: 10, gap: 4 },
+  cardMainPress: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   cardMain: { flex: 1, gap: 2 },
   cardTitle: { fontSize: 16, fontWeight: '700' },
   cardSub: { fontSize: 13 },

@@ -1,17 +1,20 @@
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useAppTheme } from '../../../src/components/theme';
-import { Avatar, PrototypeBanner } from '../../../src/components/ui';
-import { getPrototypeSettingsStore } from '../../../src/features/settings/store';
-import { getPrototypeStore, type PrototypeEntry } from '../../../src/features/vault/memory-store';
-import { expoClipboard } from '../../../src/services/expo-clipboard';
+import { useAppTheme } from '../../src/components/theme';
+import { Avatar, PrototypeBanner } from '../../src/components/ui';
+import { getPrototypeSettingsStore } from '../../src/features/settings/store';
+import { getPrototypeStore, type PrototypeEntry } from '../../src/features/vault/memory-store';
+import { expoClipboard } from '../../src/services/expo-clipboard';
+
+function paramId(raw: string | string[] | undefined): string | undefined {
+  return Array.isArray(raw) ? raw[0] : raw;
+}
 
 export default function EntryDetail() {
   const c = useAppTheme();
   const params = useLocalSearchParams<{ id: string }>();
-  const rawId = params.id;
-  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  const id = paramId(params.id);
   const [revealed, setRevealed] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [, setVersion] = useState(0);
@@ -28,6 +31,7 @@ export default function EntryDetail() {
       </View>
     );
   }
+  const item: PrototypeEntry = entry;
 
   async function copy(text: string, label: string) {
     try {
@@ -39,14 +43,14 @@ export default function EntryDetail() {
     }
   }
 
-  function confirmDelete(item: PrototypeEntry) {
-    Alert.alert('Delete entry?', `"${item.title}" will be removed from the prototype store.`, [
+  function confirmDelete(target: PrototypeEntry) {
+    Alert.alert('Delete entry?', `"${target.title}" will be removed from the prototype store.`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: () => {
-          getPrototypeStore().remove(item.id);
+          getPrototypeStore().remove(target.id);
           router.back();
         },
       },
@@ -56,21 +60,21 @@ export default function EntryDetail() {
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <Avatar letter={entry.title.charAt(0) || '?'} />
+        <Avatar letter={item.title.charAt(0) || '?'} />
         <View style={styles.headerMain}>
-          <Text style={[styles.title, { color: c.text }]}>{entry.title}</Text>
-          <Text style={[styles.tag, { color: c.accent }]}>{entry.category.toUpperCase()}</Text>
+          <Text style={[styles.title, { color: c.text }]}>{item.title}</Text>
+          <Text style={[styles.tag, { color: c.accent }]}>{item.category.toUpperCase()}</Text>
         </View>
         <Pressable
           onPress={() => {
-            getPrototypeStore().toggleFavorite(entry.id);
+            getPrototypeStore().toggleFavorite(item.id);
             setVersion((v) => v + 1);
           }}
           accessibilityRole="button"
           accessibilityLabel="Toggle favorite"
         >
           <Text style={[styles.star, { color: c.star }]}>
-            {getPrototypeStore().get(entry.id)?.isFavorite ? '★' : '☆'}
+            {getPrototypeStore().get(item.id)?.isFavorite ? '★' : '☆'}
           </Text>
         </Pressable>
       </View>
@@ -79,10 +83,10 @@ export default function EntryDetail() {
       <Text style={[styles.label, { color: c.muted }]}>USERNAME / EMAIL</Text>
       <View style={[styles.field, { backgroundColor: c.card }]}>
         <Text style={[styles.value, { color: c.text }]} selectable>
-          {entry.username || '—'}
+          {item.username || '—'}
         </Text>
-        {entry.username ? (
-          <Pressable onPress={() => copy(entry.username, 'Username')} accessibilityRole="button">
+        {item.username ? (
+          <Pressable onPress={() => copy(item.username, 'Username')} accessibilityRole="button">
             <Text style={styles.link}>Copy</Text>
           </Pressable>
         ) : null}
@@ -91,49 +95,49 @@ export default function EntryDetail() {
       <Text style={[styles.label, { color: c.muted }]}>PASSWORD</Text>
       <View style={[styles.field, { backgroundColor: c.card }]}>
         <Text style={[styles.value, { color: c.text }]} selectable>
-          {revealed ? entry.password : '•'.repeat(12)}
+          {revealed ? item.password : '•'.repeat(12)}
         </Text>
         <View style={styles.fieldActions}>
           <Pressable onPress={() => setRevealed((v) => !v)} accessibilityRole="button">
             <Text style={styles.link}>{revealed ? 'Hide' : 'Reveal'}</Text>
           </Pressable>
-          <Pressable onPress={() => copy(entry.password, 'Password')} accessibilityRole="button">
+          <Pressable onPress={() => copy(item.password, 'Password')} accessibilityRole="button">
             <Text style={styles.link}>Copy</Text>
           </Pressable>
         </View>
       </View>
 
-      {entry.url ? (
+      {item.url ? (
         <>
           <Text style={[styles.label, { color: c.muted }]}>WEBSITE</Text>
           <View style={[styles.field, { backgroundColor: c.card }]}>
             <Text style={[styles.value, { color: c.text }]} selectable>
-              {entry.url}
+              {item.url}
             </Text>
           </View>
         </>
       ) : null}
 
-      {entry.notes ? (
+      {item.notes ? (
         <>
           <Text style={[styles.label, { color: c.muted }]}>NOTES</Text>
           <View style={[styles.field, { backgroundColor: c.card }]}>
             <Text style={[styles.value, { color: c.text }]} selectable>
-              {entry.notes}
+              {item.notes}
             </Text>
           </View>
         </>
       ) : null}
 
       <Text style={[styles.meta, { color: c.muted }]}>
-        Updated {new Date(entry.updatedAt).toLocaleString()}
+        Updated {new Date(item.updatedAt).toLocaleString()}
       </Text>
 
       {notice ? <Text style={[styles.notice, { color: c.muted }]}>{notice}</Text> : null}
 
       <View style={styles.actions}>
         <Link
-          href={{ pathname: '/entry/[id]/edit', params: { id: entry.id } }}
+          href={{ pathname: '/entry/edit', params: { id: item.id } }}
           style={[styles.edit, { backgroundColor: c.card, color: c.text }]}
           accessibilityRole="button"
         >
@@ -141,7 +145,7 @@ export default function EntryDetail() {
         </Link>
         <Pressable
           style={[styles.edit, { backgroundColor: c.card }]}
-          onPress={() => confirmDelete(entry)}
+          onPress={() => confirmDelete(item)}
           accessibilityRole="button"
         >
           <Text style={[styles.deleteText, { color: c.danger }]}>Delete</Text>

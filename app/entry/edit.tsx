@@ -1,18 +1,18 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { EntryForm } from '../../../src/components/entry-form';
-import { useAppTheme } from '../../../src/components/theme';
-import { PrototypeBanner } from '../../../src/components/ui';
-import { getPrototypeStore } from '../../../src/features/vault/memory-store';
+import { EntryForm } from '../../src/components/entry-form';
+import { useAppTheme } from '../../src/components/theme';
+import { PrototypeBanner } from '../../src/components/ui';
+import { getPrototypeStore } from '../../src/features/vault/memory-store';
 
 export default function EditEntry() {
   const c = useAppTheme();
   const params = useLocalSearchParams<{ id: string }>();
-  const rawId = params.id;
-  const id = Array.isArray(rawId) ? rawId[0] : rawId;
-  const entry = id ? getPrototypeStore().get(id) : null;
+  const raw = params.id;
+  const id = Array.isArray(raw) ? raw[0] : raw;
+  const entry = id === undefined ? null : getPrototypeStore().get(id);
 
-  if (!entry) {
+  if (entry === null) {
     return (
       <View style={[styles.container, { backgroundColor: c.bg }]}>
         <Text style={[styles.title, { color: c.text }]}>Entry not found</Text>
