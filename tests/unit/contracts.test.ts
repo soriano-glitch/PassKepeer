@@ -1,9 +1,9 @@
 import { describe, expect, test } from '@jest/globals';
-import { redactForTest } from '../../src/services/logger.js';
-import { validateKdfParams } from '../../src/security/key-derivation.js';
-import { validateGeneratorOptions } from '../../src/types/vault.js';
-import { validateBackupHeader } from '../../src/services/backup.js';
-import { validateClipboardTimeout } from '../../src/services/clipboard.js';
+import { redactForTest } from '../../src/services/logger';
+import { validateKdfParams } from '../../src/security/key-derivation';
+import { validateGeneratorOptions } from '../../src/types/vault';
+import { validateBackupHeader } from '../../src/services/backup';
+import { validateClipboardTimeout } from '../../src/services/clipboard';
 
 describe('Phase 1 contracts', () => {
   test('logger redacts sensitive keys', () => {

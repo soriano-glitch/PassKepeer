@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { openEncryptedDatabase } from '../../src/database/connection.js';
+import { openEncryptedDatabase } from '../../src/database/connection';
 
 describe('fail-closed storage', () => {
   test('refuses to open without a verified encrypted backend', async () => {

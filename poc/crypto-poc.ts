@@ -7,7 +7,7 @@
  *
  * Stand-in != audited. Ship decisions require on-device runs with the real library.
  */
-import { validateKdfParams } from '../src/security/key-derivation.js';
+import { validateKdfParams } from '../src/security/key-derivation';
 
 export interface PocResult {
   id: string;

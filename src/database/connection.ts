@@ -1,4 +1,4 @@
-import { EncryptionUnavailableError } from '../security/encryption.js';
+import { EncryptionUnavailableError } from '../security/encryption';
 
 export interface DbConnectionOptions {
   fileName: string;
