@@ -15,7 +15,7 @@ describe('Phase 1 contracts', () => {
 
   test('KDF params reject bad input', () => {
     expect(() =>
-      validateKdfParams({ memKiB: 0, iterations: 1, parallelism: 1, saltB64: 'AAAAAAAAAAAAAAAAAAAAAA', version: 1 }),
+      validateKdfParams({ memKiB: -1, iterations: 1, parallelism: 1, saltB64: 'AAAAAAAAAAAAAAAAAAAAAA', version: 1 }),
     ).toThrow();
   });
 
