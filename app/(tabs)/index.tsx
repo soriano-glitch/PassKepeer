@@ -1,4 +1,4 @@
-import { Link, useFocusEffect } from 'expo-router';
+import { Link, router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useAppTheme } from '../../src/components/theme';
 import { Avatar, EmptyState, PrototypeBanner } from '../../src/components/ui';
+import { checkVaultHealth, HEALTH_LABELS } from '../../src/features/health/checks';
 import { DEFAULT_CATEGORIES } from '../../src/features/vault/categories';
 import { getPrototypeStore, type PrototypeEntry } from '../../src/features/vault/memory-store';
 
@@ -23,7 +24,11 @@ function EntryCard({
 }) {
   const c = useAppTheme();
   return (
-    <View style={[styles.card, { backgroundColor: c.card }]}>
+    <Pressable
+      style={[styles.card, { backgroundColor: c.card }]}
+      onPress={() => router.push({ pathname: '/entry/[id]/index', params: { id: entry.id } })}
+      accessibilityRole="button"
+    >
       <Avatar letter={entry.title.charAt(0) || '?'} />
       <View style={styles.cardMain}>
         <Text style={[styles.cardTitle, { color: c.text }]}>{entry.title}</Text>
@@ -33,7 +38,7 @@ function EntryCard({
       <Pressable onPress={onToggleFavorite} accessibilityRole="button" accessibilityLabel="Toggle favorite">
         <Text style={[styles.star, { color: c.star }]}>{entry.isFavorite ? '★' : '☆'}</Text>
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 
@@ -49,10 +54,18 @@ export default function VaultTab() {
     }, []),
   );
 
-  const entries = useMemo(() => {
+  const { entries, issueCount, issueSummary } = useMemo(() => {
     void version;
-    const found = getPrototypeStore().search(query);
-    return category ? found.filter((e) => e.category === category) : found;
+    const store = getPrototypeStore();
+    const found = store.search(query);
+    const filtered = category ? found.filter((e) => e.category === category) : found;
+    const health = checkVaultHealth(store.list());
+    const kinds = [...new Set(health.issues.flatMap((i) => i.kinds))];
+    return {
+      entries: filtered,
+      issueCount: health.issues.length,
+      issueSummary: kinds.map((k) => HEALTH_LABELS[k]).join(' · '),
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, category, version]);
 
@@ -79,6 +92,16 @@ export default function VaultTab() {
         </Link>
       </View>
       <PrototypeBanner />
+      <Pressable
+        style={[styles.health, { backgroundColor: c.card, borderColor: c.accent }]}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.healthText, { color: issueCount > 0 ? c.accent : c.muted }]}>
+          {issueCount > 0
+            ? `Security check: ${issueCount} entr${issueCount === 1 ? 'y' : 'ies'} need attention — ${issueSummary}`
+            : 'Security check: no issues found (local heuristic checks only)'}
+        </Text>
+      </Pressable>
       <TextInput
         style={[styles.search, { backgroundColor: c.card, color: c.text }]}
         placeholder="Search title, username, URL"
@@ -134,6 +157,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 28, fontWeight: '800' },
   add: { fontSize: 15, fontWeight: '700', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 16 },
+  health: { borderWidth: 1, borderRadius: 12, padding: 12 },
+  healthText: { fontSize: 13, lineHeight: 18 },
   search: { borderRadius: 12, padding: 12, fontSize: 15 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { fontSize: 13, fontWeight: '600', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 14 },

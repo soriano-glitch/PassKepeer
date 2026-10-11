@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 import { useAppTheme } from '../../src/components/theme';
-import { expoClipboard, DEFAULT_CLIPBOARD_CLEAR_MS } from '../../src/services/expo-clipboard';
+import { expoClipboard } from '../../src/services/expo-clipboard';
+import { getPrototypeSettingsStore } from '../../src/features/settings/store';
 import { expoSecureRandom } from '../../src/security/expo-random';
 import { generatePassword } from '../../src/features/generator/generate';
 import { estimateStrength } from '../../src/features/generator/strength';
@@ -38,6 +39,7 @@ export default function GeneratorTab() {
   const [error, setError] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [copiedMs, setCopiedMs] = useState(30_000);
 
   const strength = useMemo(() => estimateStrength(password), [password]);
   const filledSegments = password.length === 0 ? 0 : strength.score + 1;
@@ -61,7 +63,9 @@ export default function GeneratorTab() {
   async function handleCopy() {
     if (password.length === 0) return;
     try {
-      await expoClipboard.copyAndScheduleClear(password, DEFAULT_CLIPBOARD_CLEAR_MS);
+      const ms = getPrototypeSettingsStore().get().clipboardClearMs;
+      await expoClipboard.copyAndScheduleClear(password, ms);
+      setCopiedMs(ms);
       setCopied(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Copy failed.');
@@ -108,7 +112,7 @@ export default function GeneratorTab() {
             <Text style={[styles.halfButtonText, { color: c.text }]}>Regenerate</Text>
           </Pressable>
         </View>
-        {copied ? <Text style={[styles.hint, { color: c.muted }]}>Copied — clears in 30s.</Text> : null}
+        {copied ? <Text style={[styles.hint, { color: c.muted }]}>Copied — clears in {Math.round(copiedMs / 1000)}s.</Text> : null}
       </View>
 
       <View style={styles.lengthRow}>
