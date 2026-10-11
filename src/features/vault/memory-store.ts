@@ -88,7 +88,39 @@ export class PrototypeMemoryStore {
 
 let singleton: PrototypeMemoryStore | null = null;
 
+/** Fake demo content so the prototype screens read like the design mockup. Never real credentials. */
+function seedDemo(store: PrototypeMemoryStore): void {
+  const git = store.create({
+    title: 'GitHub',
+    username: 'dev@example.com',
+    password: 'demo-only-not-real',
+    url: 'https://github.com',
+    notes: '',
+    category: 'Work',
+  });
+  store.toggleFavorite(git.id);
+  store.create({
+    title: 'School Portal',
+    username: 'student.id',
+    password: 'demo-only-not-real',
+    url: '',
+    notes: '',
+    category: 'School',
+  });
+  store.create({
+    title: 'Home Wi-Fi',
+    username: 'router admin',
+    password: 'demo-only-not-real',
+    url: '',
+    notes: '',
+    category: 'Wi-Fi',
+  });
+}
+
 export function getPrototypeStore(): PrototypeMemoryStore {
-  if (!singleton) singleton = new PrototypeMemoryStore();
+  if (!singleton) {
+    singleton = new PrototypeMemoryStore();
+    seedDemo(singleton);
+  }
   return singleton;
 }

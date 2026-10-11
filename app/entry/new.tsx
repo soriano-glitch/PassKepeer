@@ -7,17 +7,16 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useColorScheme,
   View,
 } from 'react-native';
+import { useAppTheme } from '../../src/components/theme';
 import { PrototypeBanner } from '../../src/components/ui';
 import { DEFAULT_CATEGORIES } from '../../src/features/vault/categories';
 import { getPrototypeStore } from '../../src/features/vault/memory-store';
 import { requireNonEmptyString } from '../../src/utils/validation';
 
 export default function NewEntry() {
-  const scheme = useColorScheme();
-  const text = scheme === 'dark' ? '#e8eaed' : '#1a1b1e';
+  const c = useAppTheme();
   const [title, setTitle] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -44,65 +43,90 @@ export default function NewEntry() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={[styles.title, { color: text }]} accessibilityRole="header">
+    <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={styles.container}>
+      <Text style={[styles.title, { color: c.text }]} accessibilityRole="header">
         New entry
       </Text>
       <PrototypeBanner />
-      <Text style={[styles.label, { color: text }]}>Title *</Text>
-      <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="e.g. Personal email" />
-      <Text style={[styles.label, { color: text }]}>Username / email</Text>
+      <Text style={[styles.label, { color: c.text }]}>Title *</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: c.inputBg, color: c.text, borderColor: c.border }]}
+        value={title}
+        onChangeText={setTitle}
+        placeholder="e.g. Personal email"
+        placeholderTextColor={c.muted}
+      />
+      <Text style={[styles.label, { color: c.text }]}>Username / email</Text>
+      <TextInput
+        style={[styles.input, { backgroundColor: c.inputBg, color: c.text, borderColor: c.border }]}
         value={username}
         onChangeText={setUsername}
         placeholder="you@example.com"
+        placeholderTextColor={c.muted}
         autoCapitalize="none"
       />
-      <Text style={[styles.label, { color: text }]}>Password *</Text>
+      <Text style={[styles.label, { color: c.text }]}>Password *</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: c.inputBg, color: c.text, borderColor: c.border }]}
         value={password}
         onChangeText={setPassword}
         placeholder="Prototype only — not a real password"
+        placeholderTextColor={c.muted}
         secureTextEntry
       />
-      <Text style={[styles.label, { color: text }]}>Website URL</Text>
+      <Text style={[styles.label, { color: c.text }]}>Website URL</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: c.inputBg, color: c.text, borderColor: c.border }]}
         value={url}
         onChangeText={setUrl}
         placeholder="https://…"
+        placeholderTextColor={c.muted}
         autoCapitalize="none"
       />
-      <Text style={[styles.label, { color: text }]}>Notes</Text>
-      <TextInput style={[styles.input, styles.notes]} value={notes} onChangeText={setNotes} multiline />
-      <Text style={[styles.label, { color: text }]}>Category</Text>
+      <Text style={[styles.label, { color: c.text }]}>Notes</Text>
+      <TextInput
+        style={[
+          styles.input,
+          styles.notes,
+          { backgroundColor: c.inputBg, color: c.text, borderColor: c.border },
+        ]}
+        value={notes}
+        onChangeText={setNotes}
+        multiline
+      />
+      <Text style={[styles.label, { color: c.text }]}>Category</Text>
       <View style={styles.chips}>
-        {DEFAULT_CATEGORIES.map((c) => (
-          <Pressable key={c} onPress={() => setCategory(c)} accessibilityRole="button">
-            <Text style={[styles.chip, category === c && styles.chipActive]}>{c}</Text>
+        {DEFAULT_CATEGORIES.map((cat) => (
+          <Pressable key={cat} onPress={() => setCategory(cat)} accessibilityRole="button">
+            <Text
+              style={[
+                styles.chip,
+                { backgroundColor: c.card, color: c.muted },
+                category === cat && { backgroundColor: c.accent, color: c.accentText },
+              ]}
+            >
+              {cat}
+            </Text>
           </Pressable>
         ))}
       </View>
       {error ? (
-        <Text style={styles.error} accessibilityRole="alert">
+        <Text style={[styles.error, { color: c.danger }]} accessibilityRole="alert">
           {error}
         </Text>
       ) : null}
-      <Button title="Save (prototype memory only)" onPress={handleSave} />
+      <Button title="Save (prototype memory only)" onPress={handleSave} color={c.accent} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { padding: 20, gap: 8 },
-  title: { fontSize: 24, fontWeight: '700' },
+  title: { fontSize: 24, fontWeight: '800' },
   label: { fontSize: 14, fontWeight: '600', marginTop: 6 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 10, padding: 10, fontSize: 16 },
+  input: { borderWidth: 1, borderRadius: 10, padding: 10, fontSize: 16 },
   notes: { minHeight: 70, textAlignVertical: 'top' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { fontSize: 13, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 14, backgroundColor: '#e8eaed' },
-  chipActive: { backgroundColor: '#1a73e8', color: '#fff' },
-  error: { color: '#b00020', fontSize: 14 },
+  chip: { fontSize: 13, fontWeight: '600', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 14 },
+  error: { fontSize: 14 },
 });

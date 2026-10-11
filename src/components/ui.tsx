@@ -1,22 +1,12 @@
-import { StyleSheet, Text, useColorScheme, View, type ColorSchemeName } from 'react-native';
-
-function palette(scheme: ColorSchemeName) {
-  const dark = scheme === 'dark';
-  return {
-    bannerBg: dark ? '#3a2300' : '#fff4e0',
-    bannerBorder: dark ? '#8a5a00' : '#d9a441',
-    bannerText: dark ? '#ffd98a' : '#7a5200',
-    muted: dark ? '#9aa0aa' : '#5f6368',
-  };
-}
+import { StyleSheet, Text, View } from 'react-native';
+import { useAppTheme } from './theme';
 
 export function PrototypeBanner() {
-  const scheme = useColorScheme();
-  const c = palette(scheme);
+  const c = useAppTheme();
   return (
-    <View style={[styles.banner, { backgroundColor: c.bannerBg, borderColor: c.bannerBorder }]}>
-      <Text style={[styles.bannerText, { color: c.bannerText }]}>
-        Prototype store: entries sit in memory as plaintext and vanish on restart. Never enter real
+    <View style={[styles.banner, { backgroundColor: c.card, borderColor: c.accent }]}>
+      <Text style={[styles.bannerText, { color: c.accent }]}>
+        {'\u25CB'} Prototype: entries are plaintext in memory and vanish on restart. Never enter real
         passwords.
       </Text>
     </View>
@@ -24,8 +14,7 @@ export function PrototypeBanner() {
 }
 
 export function EmptyState({ message }: { message: string }) {
-  const scheme = useColorScheme();
-  const c = palette(scheme);
+  const c = useAppTheme();
   return (
     <View style={styles.empty}>
       <Text style={[styles.emptyText, { color: c.muted }]}>{message}</Text>
@@ -33,9 +22,26 @@ export function EmptyState({ message }: { message: string }) {
   );
 }
 
+export function SectionLabel({ text }: { text: string }) {
+  const c = useAppTheme();
+  return <Text style={[styles.section, { color: c.muted }]}>{text}</Text>;
+}
+
+export function Avatar({ letter }: { letter: string }) {
+  const c = useAppTheme();
+  return (
+    <View style={[styles.avatar, { backgroundColor: c.cardAlt }]}>
+      <Text style={[styles.avatarText, { color: c.accent }]}>{letter.toUpperCase()}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  banner: { borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 12 },
-  bannerText: { fontSize: 13, lineHeight: 18 },
+  banner: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 4 },
+  bannerText: { fontSize: 12, lineHeight: 17 },
   empty: { paddingVertical: 40, alignItems: 'center' },
-  emptyText: { fontSize: 15 },
+  emptyText: { fontSize: 14, textAlign: 'center', paddingHorizontal: 32 },
+  section: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
+  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 17, fontWeight: '700' },
 });

@@ -6,42 +6,39 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useColorScheme,
   View,
   type ListRenderItemInfo,
 } from 'react-native';
-import { EmptyState, PrototypeBanner } from '../../src/components/ui';
+import { useAppTheme } from '../../src/components/theme';
+import { Avatar, EmptyState, PrototypeBanner } from '../../src/components/ui';
 import { DEFAULT_CATEGORIES } from '../../src/features/vault/categories';
 import { getPrototypeStore, type PrototypeEntry } from '../../src/features/vault/memory-store';
 
-function EntryRow({
+function EntryCard({
   entry,
   onToggleFavorite,
 }: {
   entry: PrototypeEntry;
   onToggleFavorite: () => void;
 }) {
-  const scheme = useColorScheme();
-  const text = scheme === 'dark' ? '#e8eaed' : '#1a1b1e';
-  const muted = scheme === 'dark' ? '#9aa0aa' : '#5f6368';
+  const c = useAppTheme();
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: c.card }]}>
+      <Avatar letter={entry.title.charAt(0) || '?'} />
       <View style={styles.cardMain}>
-        <Text style={[styles.cardTitle, { color: text }]}>{entry.title}</Text>
-        <Text style={[styles.cardSub, { color: muted }]}>
-          {entry.username} · {entry.category}
-        </Text>
+        <Text style={[styles.cardTitle, { color: c.text }]}>{entry.title}</Text>
+        <Text style={[styles.cardSub, { color: c.muted }]}>{entry.username}</Text>
+        <Text style={[styles.cardTag, { color: c.accent }]}>{entry.category.toUpperCase()}</Text>
       </View>
       <Pressable onPress={onToggleFavorite} accessibilityRole="button" accessibilityLabel="Toggle favorite">
-        <Text style={styles.star}>{entry.isFavorite ? '★' : '☆'}</Text>
+        <Text style={[styles.star, { color: c.star }]}>{entry.isFavorite ? '★' : '☆'}</Text>
       </Pressable>
     </View>
   );
 }
 
 export default function VaultTab() {
-  const scheme = useColorScheme();
-  const text = scheme === 'dark' ? '#e8eaed' : '#1a1b1e';
+  const c = useAppTheme();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
@@ -54,15 +51,14 @@ export default function VaultTab() {
 
   const entries = useMemo(() => {
     void version;
-    const store = getPrototypeStore();
-    const found = store.search(query);
+    const found = getPrototypeStore().search(query);
     return category ? found.filter((e) => e.category === category) : found;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, category, version]);
 
   function renderItem({ item }: ListRenderItemInfo<PrototypeEntry>) {
     return (
-      <EntryRow
+      <EntryCard
         entry={item}
         onToggleFavorite={() => {
           getPrototypeStore().toggleFavorite(item.id);
@@ -73,30 +69,51 @@ export default function VaultTab() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: text }]} accessibilityRole="header">
+        <Text style={[styles.title, { color: c.text }]} accessibilityRole="header">
           Vault
         </Text>
-        <Link href="/entry/new" style={styles.add} accessibilityRole="button">
+        <Link href="/entry/new" style={[styles.add, { backgroundColor: c.accent, color: c.accentText }]} accessibilityRole="button">
           + Add
         </Link>
       </View>
       <PrototypeBanner />
       <TextInput
-        style={[styles.search, { color: text }]}
+        style={[styles.search, { backgroundColor: c.card, color: c.text }]}
         placeholder="Search title, username, URL"
+        placeholderTextColor={c.muted}
         value={query}
         onChangeText={setQuery}
         autoCapitalize="none"
       />
       <View style={styles.chips}>
         <Pressable onPress={() => setCategory(null)} accessibilityRole="button">
-          <Text style={[styles.chip, category === null && styles.chipActive]}>All</Text>
+          <Text
+            style={[
+              styles.chip,
+              { backgroundColor: c.card, color: c.muted },
+              category === null && { backgroundColor: c.accent, color: c.accentText },
+            ]}
+          >
+            All
+          </Text>
         </Pressable>
-        {DEFAULT_CATEGORIES.map((c) => (
-          <Pressable key={c} onPress={() => setCategory(category === c ? null : c)} accessibilityRole="button">
-            <Text style={[styles.chip, category === c && styles.chipActive]}>{c}</Text>
+        {DEFAULT_CATEGORIES.filter((cat) => cat !== 'Other').map((cat) => (
+          <Pressable
+            key={cat}
+            onPress={() => setCategory(category === cat ? null : cat)}
+            accessibilityRole="button"
+          >
+            <Text
+              style={[
+                styles.chip,
+                { backgroundColor: c.card, color: c.muted },
+                category === cat && { backgroundColor: c.accent, color: c.accentText },
+              ]}
+            >
+              {cat.replace('Social Media', 'Social')}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -104,24 +121,26 @@ export default function VaultTab() {
         data={entries}
         keyExtractor={(e) => e.id}
         renderItem={renderItem}
-        ListEmptyComponent={<EmptyState message="No entries yet. Add your first below — prototype only, no real passwords." />}
+        ListEmptyComponent={
+          <EmptyState message="No entries yet. Add your first below — prototype only, no real passwords." />
+        }
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, gap: 10 },
+  container: { flex: 1, padding: 16, gap: 12 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 26, fontWeight: '700' },
-  add: { fontSize: 18, color: '#1a73e8', fontWeight: '600' },
-  search: { borderWidth: 1, borderColor: '#ccc', borderRadius: 10, padding: 10, fontSize: 16 },
+  title: { fontSize: 28, fontWeight: '800' },
+  add: { fontSize: 15, fontWeight: '700', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 16 },
+  search: { borderRadius: 12, padding: 12, fontSize: 15 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { fontSize: 13, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 14, backgroundColor: '#e8eaed' },
-  chipActive: { backgroundColor: '#1a73e8', color: '#fff' },
-  card: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 10, backgroundColor: '#f1f3f4', marginBottom: 8 },
-  cardMain: { flex: 1 },
-  cardTitle: { fontSize: 16, fontWeight: '600' },
+  chip: { fontSize: 13, fontWeight: '600', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 14 },
+  card: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 14, marginBottom: 10, gap: 12 },
+  cardMain: { flex: 1, gap: 2 },
+  cardTitle: { fontSize: 16, fontWeight: '700' },
   cardSub: { fontSize: 13 },
-  star: { fontSize: 22, color: '#f9ab00' },
+  cardTag: { fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
+  star: { fontSize: 22 },
 });
